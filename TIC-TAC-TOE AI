@@ -1,0 +1,90 @@
+import math
+
+def display_board(board):
+    for row in board:
+        print(" | ".join(row))
+    print()
+
+def find_winner(board):
+    for row in board:
+        if row[0] == row[1] == row[2] and row[0] != " ":
+            return row[0]
+    for col in range(3):
+        if board[0][col] == board[1][col] == board[2][col] and board[0][col] != " ":
+            return board[0][col]
+    if board[0][0] == board[1][1] == board[2][2] and board[0][0] != " ":
+        return board[0][0]
+    if board[0][2] == board[1][1] == board[2][0] and board[0][2] != " ":
+        return board[0][2]
+    return None
+
+def get_empty_positions(board):
+    return [(r, c) for r in range(3) for c in range(3) if board[r][c] == " "]
+
+def evaluate_move(board, depth, maximizing):
+    winner = find_winner(board)
+    if winner == "X":
+        return -10 + depth
+    if winner == "O":
+        return 10 - depth
+    if not get_empty_positions(board):
+        return 0
+    if maximizing:
+        max_value = -math.inf
+        for r, c in get_empty_positions(board):
+            board[r][c] = "O"
+            max_value = max(max_value, evaluate_move(board, depth + 1, False))
+            board[r][c] = " "
+        return max_value
+    else:
+        min_value = math.inf
+        for r, c in get_empty_positions(board):
+            board[r][c] = "X"
+            min_value = min(min_value, evaluate_move(board, depth + 1, True))
+            board[r][c] = " "
+        return min_value
+
+def compute_best_move(board):
+    best_value = -math.inf
+    best_position = None
+    for r, c in get_empty_positions(board):
+        board[r][c] = "O"
+        move_score = evaluate_move(board, 0, False)
+        board[r][c] = " "
+        if move_score > best_value:
+            best_value = move_score
+            best_position = (r, c)
+    return best_position
+
+def start_game():
+    board = [[" " for _ in range(3)] for _ in range(3)]
+    print("Tic-Tac-Toe: You (X) vs Computer (O)")
+    display_board(board)
+    while get_empty_positions(board):
+        try:
+            user_input = tuple(map(int, input("Enter row and column (0-2, e.g., 1 2): ").split()))
+            if user_input not in get_empty_positions(board):
+                print("Invalid move, try again.")
+                continue
+        except ValueError:
+            print("Invalid input, enter two numbers between 0 and 2.")
+            continue
+        board[user_input[0]][user_input[1]] = "X"
+        display_board(board)
+        if find_winner(board):
+            print("You win!")
+            return
+        if not get_empty_positions(board):
+            print("It's a draw!")
+            return
+        ai_choice = compute_best_move(board)
+        board[ai_choice[0]][ai_choice[1]] = "O"
+        print("Computer's move:")
+        display_board(board)
+        if find_winner(board):
+            print("Computer wins!")
+            return
+    print("It's a draw!")
+
+if __name__ == "__main__":
+    start_game()
