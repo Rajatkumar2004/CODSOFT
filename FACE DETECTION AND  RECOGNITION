@@ -2,25 +2,23 @@ import cv2
 import numpy as np
 import face_recognition
 
-def locate_faces(image_file):
-    image = cv2.imread(image_file)
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-    faces = face_cascade.detectMultiScale(gray, 1.1, 5, minSize=(30, 30))
-    for (x, y, w, h) in faces:
-        cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
-    cv2.imshow('Detected Faces', image)
+def locate_human_faces(image_path):
+    img = cv2.imread(image_path)
+    detected_faces = face_recognition.face_locations(img)
+    for coordinates in detected_faces:
+        top, right, bottom, left = coordinates
+        cv2.rectangle(img, (left, top), (right, bottom), (0, 255, 0), 2)
+    cv2.imshow('Identified Faces', img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-def identify_faces(ref_image_file, test_image_file):
-    ref_image = face_recognition.load_image_file(ref_image_file)
-    test_image = face_recognition.load_image_file(test_image_file)
-    ref_encoding = face_recognition.face_encodings(ref_image)
-    test_encoding = face_recognition.face_encodings(test_image)
-    if not ref_encoding or not test_encoding:
-        print("Error: No face detected.")
+def verify_identity(registered_image_path, test_image_path):
+    registered_img = face_recognition.load_image_file(registered_image_path)
+    test_img = face_recognition.load_image_file(test_image_path)
+    registered_encoding = face_recognition.face_encodings(registered_img)
+    test_encoding = face_recognition.face_encodings(test_img)
+    if not registered_encoding or not test_encoding:
+        print("Error: No recognizable faces detected in one of the images.")
         return
-    result = face_recognition.compare_faces([ref_encoding[0]], test_encoding[0])
-    print("Face matched!" if result[0] else "No match found.")
-
+    is_match = face_recognition.compare_faces([registered_encoding[0]], test_encoding[0])
+    print("Identity Verified!" if is_match[0] else "No Match Detected.")
